@@ -1,4 +1,5 @@
 use std::net::{UdpSocket, SocketAddr};
+use std::time::{Duration, Instant};
 
 use captrs::Capturer;
 
@@ -32,27 +33,27 @@ fn main() {
     
     let mut capt = Capturer::new(0).expect("Failed to open screen for capture!");
     let (scr_width, _) = capt.geometry();
+
+    let mut data = Vec::new();
     
     loop {
+        //let now = Instant::now();
         capt.capture_store_frame().expect("Failed to capture screen!");
 
         for (socket, offset) in sockets.iter().zip(OFFSETS.iter()) {
-            update_panel(socket, offset[0], offset[1], capt.get_stored_frame().unwrap(), scr_width as usize);
+            //update_panel(socket, offset[0], offset[1], capt.get_stored_frame().unwrap(), scr_width as usize);
+            for y in 0..PANEL_HEIGHT {
+                for x in 0..PANEL_WIDTH {
+                    let color = capt.get_stored_frame().unwrap()[(y + offset[1]) * scr_width as usize + (x + offset[0])];
+                    data.extend_from_slice(&pixel_to_packet(x as u8, y as u8, color.r / 4, color.g / 4, color.b / 4));
+                }
+                socket.send(&data).expect("Failed to send data");
+                data.clear();
+            }
         }
 
-        std::thread::sleep(std::time::Duration::from_millis(25));
-    }
-}
-
-fn update_panel(socket: &UdpSocket, xpos: usize, ypos: usize, image_data: &[captrs::Bgr8], image_width: usize){
-    let mut data = Vec::<u8>::new();
-    for y in 0..PANEL_HEIGHT {
-        for x in 0..PANEL_WIDTH {
-            let color = image_data[(y + ypos) * image_width + (x + xpos)];
-            data.extend_from_slice(&pixel_to_packet(x as u8, y as u8, color.r / 4, color.g / 4, color.b / 4));
-        }
-        socket.send(&data).expect("Failed to send data");
-        data.clear();
+        std::thread::sleep(Duration::from_millis(25));
+        //println!("{} us", now.elapsed().as_micros());
     }
 }
 
