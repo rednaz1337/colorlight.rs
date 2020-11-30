@@ -2,11 +2,11 @@ use std::io::ErrorKind::WouldBlock;
 
 mod panel;
 
-///divisor is the FPS
-const TARGET_TIME: u64 = 1000 / 30;
+///divisor is the FPS. I haven't found a proper way to give me the exact FPS yet, this will be ≈ 30 FPS
+const TARGET_TIME: u64 = 1000 / 40;
 
 fn main() {
-    let config_json = 
+    let mut config_json = // Default config if nothing is provided
     r#"{
         "offset": {
             "x": 0,
@@ -46,10 +46,14 @@ fn main() {
                 }
             }
         ]
-    }"#;
+    }"#.to_string();
 
-    let panels = panel::Panels::from_json(config_json).unwrap();
-    #[cfg(debug_assertions)]
+    if std::env::args().len() >= 2 { // use second paramteter as JSON config
+        config_json = std::env::args().nth(1).unwrap();
+    }
+
+    let panels = panel::Panels::from_json(&config_json).expect("Failed to parse JSON");
+    #[cfg(debug_assertions)] // execuete the next line only in debug builds
     println!("Deserialized JSON: {:#?}", panels);
     let mut panel_writer = panel::PanelWriter::new(panels);
 
@@ -62,6 +66,7 @@ fn main() {
     let mut frame_counter = 0;
     let mut time_acc = 0.0;
 
+    // run this forever
     loop {
         // try to capture a frame
         match capturer.frame() {

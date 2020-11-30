@@ -25,6 +25,7 @@ pub struct PanelWriter {
 
 impl Panels {
     /// Creates the panel Structs from a Json String
+    /// An example string can be found in `main.rs`
     pub fn from_json(json: &str) -> Result<Self, String> {
         let deserialized: Self = serde_json::from_str(json).map_err(|e| e.to_string())?;
 
