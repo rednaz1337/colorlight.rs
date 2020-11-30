@@ -75,7 +75,7 @@ fn process_frame(frame: scrap::Frame, row_data: &mut Vec<u8>, sockets: &Vec<UdpS
         }
     }
 
-    std::thread::sleep(Duration::from_millis(25));
+    //std::thread::sleep(Duration::from_millis(25));
 }
 
 fn pixel_to_packet(x: u8, y: u8, r: u8, g: u8, b: u8) -> [u8; 4] {
